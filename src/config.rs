@@ -1,5 +1,7 @@
 /* src/config.rs */
 
+//! Configuration types for nested variable resolution.
+
 /// Behavior when a variable is not found.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum NotFound {

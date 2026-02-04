@@ -1,5 +1,7 @@
 /* examples/not_found.rs */
 
+//! Not found handling example.
+
 use nvr::{Config, NotFound, resolve};
 use varchain::Scope;
 

@@ -1,5 +1,7 @@
 /* examples/simple.rs */
 
+//! Simple resolution example.
+
 use nvr::resolve_default;
 use std::collections::HashMap;
 use varchain::Scope;

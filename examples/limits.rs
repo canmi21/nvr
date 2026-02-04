@@ -1,5 +1,7 @@
 /* examples/limits.rs */
 
+//! Limits and safety example.
+
 use nvr::{Config, resolve};
 use varchain::Scope;
 

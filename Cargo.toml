@@ -25,17 +25,21 @@ std = ["thiserror/std", "mst-parser/std", "varchain/std"]
 tracing = ["dep:tracing", "mst-parser/tracing"]
 full = ["std", "tracing"]
 
-#[[example]]
-#name = "{...}"
-#required-features = ["{...}"]
+[[example]]
+name = "simple"
+required-features = ["std"]
 
-#[[example]]
-#name = "{...}"
-#required-features = ["{...}"]
+[[example]]
+name = "nested"
+required-features = ["std"]
 
-#[[example]]
-#name = "{...}"
-#required-features = ["{...}"]
+[[example]]
+name = "not_found"
+required-features = ["std"]
+
+[[example]]
+name = "limits"
+required-features = ["std"]
 
 [dev-dependencies]
 serial_test = "3"

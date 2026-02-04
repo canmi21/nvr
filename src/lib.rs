@@ -1,6 +1,9 @@
 /* src/lib.rs */
 
-//! with support for nested variables like `{{kv.{{proto}}_backend}}`.
+//! `nvr` (Nested Variable Resolution) resolves mustache-style template strings.
+//!
+//! It supports nested variables like `{{kv.{{proto}}_backend}}` and leverages
+//! `mst-parser` for template parsing and `varchain` for asynchronous variable lookups.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_docs)]
@@ -20,6 +23,8 @@ use alloc::string::String;
 use tracing::{debug, instrument};
 
 /// Resolve with default configuration.
+///
+/// This is a convenience function that uses `Config::default()`.
 pub async fn resolve_default(template: &str, scope: &varchain::Scope) -> Result<String, Error> {
 	resolve(template, scope, &Config::default()).await
 }
@@ -40,6 +45,7 @@ pub async fn resolve(
 	Ok(out)
 }
 
+/// Recursively resolve AST nodes.
 #[cfg_attr(feature = "tracing", instrument(skip(nodes, scope, config, out)))]
 async fn resolve_nodes(
 	nodes: &[mst_parser::Node],
@@ -94,6 +100,7 @@ async fn resolve_nodes(
 	Ok(())
 }
 
+/// Append a string to the output while checking against a size limit.
 fn append_with_limit(out: &mut String, s: &str, limit: usize) -> Result<(), Error> {
 	if out.len() + s.len() > limit {
 		return Err(Error::SizeExceeded { limit });

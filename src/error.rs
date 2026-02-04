@@ -1,5 +1,7 @@
 /* src/error.rs */
 
+//! Error types for the `nvr` crate.
+
 use alloc::string::String;
 
 /// Error types for resolution.

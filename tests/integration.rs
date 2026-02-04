@@ -1,5 +1,7 @@
 /* tests/integration.rs */
 
+//! Integration tests for nvr crate.
+
 use nvr::{Config, Error, NotFound, resolve};
 use std::collections::HashMap;
 use varchain::Scope;
@@ -139,8 +141,83 @@ async fn test_plain_text() {
 }
 
 #[tokio::test]
+
 async fn test_empty_template() {
 	let scope = Scope::new();
+
 	let config = Config::default();
+
 	assert_eq!(resolve("", &scope, &config).await.unwrap(), "");
+}
+
+#[tokio::test]
+
+async fn test_depth_zero() {
+	let scope = Scope::new();
+
+	let config = Config {
+		max_resolve_depth: 0,
+
+		..Config::default()
+	};
+
+	// Any variable resolution requires at least depth 1 (the variable itself)
+
+	let res = resolve("{{a}}", &scope, &config).await;
+
+	match res {
+		Err(Error::DepthExceeded { limit }) => assert_eq!(limit, 0),
+
+		_ => panic!("Expected DepthExceeded(0), got {:?}", res),
+	}
+
+	// Plain text should still work at depth 0
+
+	assert_eq!(resolve("hello", &scope, &config).await.unwrap(), "hello");
+}
+
+#[tokio::test]
+
+async fn test_size_zero() {
+	let scope = Scope::new();
+
+	let config = Config {
+		max_result_size: 0,
+
+		..Config::default()
+	};
+
+	// Any output should fail
+
+	let res = resolve("a", &scope, &config).await;
+
+	match res {
+		Err(Error::SizeExceeded { limit }) => assert_eq!(limit, 0),
+
+		_ => panic!("Expected SizeExceeded(0), got {:?}", res),
+	}
+
+	// Empty template with size 0 should work
+
+	assert_eq!(resolve("", &scope, &config).await.unwrap(), "");
+}
+
+#[tokio::test]
+
+async fn test_mixed_variables() {
+	let mut kv = HashMap::new();
+
+	kv.insert("a".into(), "val_a".into());
+
+	kv.insert("b".into(), "val_b".into());
+
+	let scope = Scope::new().push(kv);
+
+	let config = Config::default();
+
+	let r = resolve("Start {{a}} and {{b}} End", &scope, &config)
+		.await
+		.unwrap();
+
+	assert_eq!(r, "Start val_a and val_b End");
 }

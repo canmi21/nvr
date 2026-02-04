@@ -1,4 +1,4 @@
-# nvr
+# NVR
 
 Nested Variable Resolution for mustache-style template strings.
 
@@ -22,35 +22,11 @@ Check the `examples` directory for runnable code:
 - **Not Found Handling**: [`examples/not_found.rs`](examples/not_found.rs) - Different behaviors for missing variables.
 - **Limits & Safety**: [`examples/limits.rs`](examples/limits.rs) - Depth and size limit enforcement.
 
-### Quick Start
-
-```rust
-use nvr::{resolve, Config, NotFound};
-use varchain::Scope;
-use std::collections::HashMap;
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut kv = HashMap::new();
-    kv.insert("proto".into(), "http".into());
-    kv.insert("kv.http_backend".into(), "server-01".into());
-
-    let scope = Scope::new().push(kv);
-    let config = Config::default();
-
-    // Nested variable: {{kv.http_backend}}
-    let r = resolve("{{kv.{{proto}}_backend}}", &scope, &config).await?;
-    assert_eq!(r, "server-01");
-    
-    Ok(())
-}
-```
-
 ## Installation
 
 ```toml
 [dependencies]
-nvr = { version = "0.x", features = ["full"] }
+nvr = { version = "0.1", features = ["full"] }
 ```
 
 ## Feature Flags
