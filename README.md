@@ -1,48 +1,64 @@
-# Sigterm
+# nvr
 
-Signal-aware async control and cancellation primitives for Tokio.
+Nested Variable Resolution for mustache-style template strings.
 
-`sigterm` abstracts away the boilerplate of listening for system signals (`Ctrl+C`, `SIGTERM`, etc.) and coordinating shutdown across multiple asynchronous tasks.
+`nvr` resolves template strings containing variables like `{{variable}}`, with full support for recursive nesting such as `{{kv.{{proto}}_backend}}`. It bridges `mst-parser` for template structure and `varchain` for flexible, async variable lookups.
 
 ## Features
 
-- **Signal Waiting**: Wait for `Ctrl+C` or `SIGTERM` across platforms with a single `await`. Use `try_wait()` for non-panicking version.
-- **Cancellation Tokens**: Hierarchy-based cancellation (parent cancels child) powered by `tokio-util`.
-- **Shutdown Primitives**:
-  - `Shutdown`: One-shot channel for single-task termination.
-  - `Broadcast`: Notify multiple subscribers of a shutdown event.
-  - `ShutdownGuard`: RAII guard that triggers shutdown when dropped (useful for panics).
-- **Framework Integration**: `shutdown_signal()` helper designed for seamless integration with `axum::serve`.
-- **Unix Extensions**: Listen for custom signal sets (`SIGHUP`, `SIGQUIT`, etc.) on Unix systems.
+- **Nested Resolution**: Resolve variables whose keys are themselves templates (e.g., `{{prefix_{{id}}}}`).
+- **Async Lookup**: Integrated with `varchain` for non-blocking, chainable variable sources.
+- **Safety Limits**: Configurable recursion depth and result size limits to prevent resource exhaustion.
+- **Injection Protection**: Prevents malicious variable injection by validating resolved keys.
+- **Flexible Missing Logic**: Choose between returning original tags, empty strings, or errors for missing variables.
+- **no_std Support**: Compatible with `no_std + alloc` environments.
 
 ## Usage Examples
 
 Check the `examples` directory for runnable code:
 
-- **Basic Usage**: [`examples/simple.rs`](examples/simple.rs) - Wait for a simple shutdown signal.
-- **Server Integration**: [`examples/shutdown_signal.rs`](examples/shutdown_signal.rs) - Combine system signals with internal cancellation (e.g., for Axum).
-- **Task Orchestration**: [`examples/broadcast.rs`](examples/broadcast.rs) - Coordinate multiple workers.
-- **Hierarchical Cancellation**: [`examples/cancellation.rs`](examples/cancellation.rs) - Manage tree-structured tasks.
-- **Scope Guard**: [`examples/guard.rs`](examples/guard.rs) - Ensure shutdown on exit or panic.
+- **Simple Resolution**: [`examples/simple.rs`](examples/simple.rs) - Basic variable lookup.
+- **Nested Resolution**: [`examples/nested.rs`](examples/nested.rs) - Resolving variables within variables.
+- **Not Found Handling**: [`examples/not_found.rs`](examples/not_found.rs) - Different behaviors for missing variables.
+- **Limits & Safety**: [`examples/limits.rs`](examples/limits.rs) - Depth and size limit enforcement.
+
+### Quick Start
+
+```rust
+use nvr::{resolve, Config, NotFound};
+use varchain::Scope;
+use std::collections::HashMap;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut kv = HashMap::new();
+    kv.insert("proto".into(), "http".into());
+    kv.insert("kv.http_backend".into(), "server-01".into());
+
+    let scope = Scope::new().push(kv);
+    let config = Config::default();
+
+    // Nested variable: {{kv.http_backend}}
+    let r = resolve("{{kv.{{proto}}_backend}}", &scope, &config).await?;
+    assert_eq!(r, "server-01");
+    
+    Ok(())
+}
+```
 
 ## Installation
 
 ```toml
 [dependencies]
-sigterm = { version = "0.3", features = ["full"] }
+nvr = { version = "0.x", features = ["full"] }
 ```
 
 ## Feature Flags
 
 | Feature | Description |
 |---------|-------------|
-| `signal` | Enables signal handling (Ctrl+C, SIGTERM) - enabled by default. |
-| `sync` | Enables synchronization primitives (`Shutdown`, `Broadcast`). |
-| `macros` | Enables Tokio macro support. |
-| `rt` | Enables Tokio runtime support (required for `wait_for`). |
-| `cancel` | Enables hierarchical cancellation tokens via `tokio-util`. |
-| `time` | Enables timeout support for signal waiting. |
-| `tracing` | Enables optional tracing instrumentation for debugging. |
+| `std` | Enables standard library support - enabled by default. |
+| `tracing` | Enables optional tracing instrumentation for resolution steps. |
 | `full` | Enables all features above. |
 
 ## License
